@@ -1,7 +1,6 @@
 import openai
 import os
 import json
-import asyncio
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -9,7 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class AIContentService:
+class ContentAgent:
+    """Autonomous agent responsible for generating social media content and images."""
+
     def __init__(self):
         self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -73,9 +74,8 @@ Return ONLY a valid JSON array, no markdown, no explanation:
         )
 
         raw = (response.choices[0].message.content or "").strip()
-        print(f"[ai] raw response length: {len(raw)} chars")
+        print(f"[content-agent] response length: {len(raw)} chars")
 
-        # Strip markdown code fences if present
         if raw.startswith("```"):
             parts = raw.split("```")
             raw = parts[1] if len(parts) > 1 else raw
@@ -84,7 +84,6 @@ Return ONLY a valid JSON array, no markdown, no explanation:
             raw = raw.strip()
 
         parsed = json.loads(raw)
-        # GPT sometimes wraps the array under a key like {"posts": [...]}
         if isinstance(parsed, dict):
             for v in parsed.values():
                 if isinstance(v, list):
@@ -109,7 +108,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
             )
             return response.data[0].url
         except Exception as e:
-            print(f"[image-gen] failed: {e}")
+            print(f"[content-agent] image generation failed: {e}")
             return None
 
     async def regenerate_caption(

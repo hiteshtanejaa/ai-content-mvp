@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from database import Base
+from src.services.database import Base
 
 
 class Calendar(Base):
@@ -14,7 +14,7 @@ class Calendar(Base):
     brand_description = Column(Text, nullable=False)
     industry = Column(String)
     tone = Column(String)
-    platforms = Column(String)  # comma-separated
+    platforms = Column(String)
     num_days = Column(Integer, default=7)
     created_at = Column(DateTime, server_default=func.now())
     status = Column(String, default="generating")  # generating | ready | error
