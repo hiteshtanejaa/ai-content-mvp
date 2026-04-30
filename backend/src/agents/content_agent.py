@@ -1,9 +1,11 @@
-import openai
-import os
 import json
+import os
 from typing import List, Optional
 
+import openai
 from dotenv import load_dotenv
+
+from src.services.llm import get_llm
 
 load_dotenv()
 
@@ -12,8 +14,11 @@ class ContentAgent:
     """Autonomous agent responsible for generating social media content and images."""
 
     def __init__(self):
-        self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.llm_model = os.getenv("LLM_MODEL", "gpt-4o")
+        self.llm = get_llm(temperature=0.8)
+        # Image generation always uses OpenAI (DALL-E); uses its own client
+        self.image_client = openai.AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
         self.image_model = os.getenv("IMAGE_MODEL", "dall-e-3")
 
     async def generate_content_plan(
@@ -69,8 +74,9 @@ Return ONLY a valid JSON array, no markdown, no explanation:
   }}
 ]"""
 
-        response = await self.client.chat.completions.create(
-            model=self.llm_model,
+        response = await self.llm.client.chat.completions.create(
+            model=self.llm.model,
+            temperature=self.llm.temperature,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=8192,
         )
@@ -101,7 +107,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
                 f"{prompt}. High-quality professional photography or illustration, "
                 "suitable for social media marketing, vibrant and eye-catching."
             )
-            response = await self.client.images.generate(
+            response = await self.image_client.images.generate(
                 model=self.image_model,
                 prompt=enhanced,
                 size="1024x1024",
@@ -144,8 +150,9 @@ Platform rules:
 
 Return ONLY the caption text."""
 
-        response = await self.client.chat.completions.create(
-            model=self.llm_model,
+        response = await self.llm.client.chat.completions.create(
+            model=self.llm.model,
+            temperature=self.llm.temperature,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1024,
         )
@@ -169,8 +176,9 @@ The prompt must describe: subject, setting, lighting, mood, composition, style.
 Avoid text or words in the image.
 Return ONLY the image prompt."""
 
-        response = await self.client.chat.completions.create(
-            model=self.llm_model,
+        response = await self.llm.client.chat.completions.create(
+            model=self.llm.model,
+            temperature=self.llm.temperature,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=256,
         )
