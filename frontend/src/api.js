@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: 'http://localhost:8001' })
 
+export const listCampaigns = () =>
+  api.get('/campaigns').then((r) => r.data)
+
 export const createCampaign = (data) =>
   api.post('/campaigns', data).then((r) => r.data)
 

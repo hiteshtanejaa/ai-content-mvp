@@ -103,7 +103,13 @@ async def create_campaign(req: CampaignRequest, background_tasks: BackgroundTask
 def list_campaigns():
     """Returns all campaigns with campaign_id and status only."""
     return [
-        {"campaign_id": cid, "status": c["status"]}
+        {
+            "campaign_id": cid,
+            "status": c["status"],
+            "brand_prompt": (c.get("brand_prompt") or "")[:80],
+            "platforms": c.get("platforms", []),
+            "num_days": c.get("num_days", 0),
+        }
         for cid, c in campaigns.items()
     ]
 
