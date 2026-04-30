@@ -16,4 +16,4 @@ echo.
 echo Backend running at http://localhost:8000
 echo API docs at     http://localhost:8000/docs
 echo.
-uvicorn main:app --reload --port 8000
+uvicorn src.api.main:app --reload --port 8000
