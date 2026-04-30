@@ -13,6 +13,8 @@ class ContentAgent:
 
     def __init__(self):
         self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.llm_model = os.getenv("LLM_MODEL", "gpt-4o")
+        self.image_model = os.getenv("IMAGE_MODEL", "dall-e-3")
 
     async def generate_content_plan(
         self,
@@ -68,7 +70,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
 ]"""
 
         response = await self.client.chat.completions.create(
-            model="gpt-4o",
+            model=self.llm_model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=8192,
         )
@@ -100,7 +102,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
                 "suitable for social media marketing, vibrant and eye-catching."
             )
             response = await self.client.images.generate(
-                model="dall-e-3",
+                model=self.image_model,
                 prompt=enhanced,
                 size="1024x1024",
                 quality="standard",
@@ -143,7 +145,7 @@ Platform rules:
 Return ONLY the caption text."""
 
         response = await self.client.chat.completions.create(
-            model="gpt-4o",
+            model=self.llm_model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1024,
         )
@@ -168,7 +170,7 @@ Avoid text or words in the image.
 Return ONLY the image prompt."""
 
         response = await self.client.chat.completions.create(
-            model="gpt-4o",
+            model=self.llm_model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=256,
         )
