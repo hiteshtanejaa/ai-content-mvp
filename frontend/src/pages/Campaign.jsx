@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, CheckCircle, Clock, Loader2, AlertCircle, Spar
 import { useCampaign } from '../hooks/useCampaign'
 import { scheduleAll } from '../api'
 import PostCard from '../components/PostCard'
+import AgentDashboard from '../components/AgentDashboard'
 
 export default function Campaign() {
   const { campaignId } = useParams()
@@ -146,6 +147,9 @@ export default function Campaign() {
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-6">
+        {/* Agent dashboard */}
+        <AgentDashboard logs={campaign?.agent_logs ?? []} />
+
         {/* Stat bar */}
         <div className="flex flex-wrap items-center gap-6 mb-6 text-sm">
           <span className="text-gray-400">{totalCount} posts</span>

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -21,9 +22,21 @@ app.add_middleware(
 
 # ---------------------------------------------------------------------------
 # In-memory store — MVP data layer
-# Each entry: CampaignState fields + "status" (generating | ready | error)
+# Each entry: CampaignState fields + "status" + "agent_logs"
 # ---------------------------------------------------------------------------
 campaigns: dict[str, dict] = {}
+
+
+def _log_agent(campaign_id: str, agent: str, status: str, message: str) -> None:
+    """Append a timestamped status entry for an agent."""
+    if campaign_id not in campaigns:
+        return
+    campaigns[campaign_id].setdefault("agent_logs", []).append({
+        "agent":   agent,
+        "status":  status,   # running | done | error | waiting
+        "message": message,
+        "ts":      datetime.now(timezone.utc).isoformat(),
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -47,15 +60,26 @@ class PostUpdate(BaseModel):
 
 async def _run_graph(campaign_id: str, state: CampaignState) -> None:
     try:
+        _log_agent(campaign_id, "strategy", "running", "Analysing brand and building visual style guide…")
+        _log_agent(campaign_id, "content",  "waiting", "Waiting for strategy to complete")
+        _log_agent(campaign_id, "scheduler","waiting", "Waiting for posts to be approved")
+
         result = await campaign_graph.ainvoke(state)
+
+        post_count = len(result.get("posts", []))
+        _log_agent(campaign_id, "strategy", "done",    f"Generated {post_count} posts across {state['num_days']} days")
+        _log_agent(campaign_id, "content",  "done",    f"Captions and images generated for {post_count} posts")
+
         campaigns[campaign_id].update({**result, "status": "ready"})
     except Exception as exc:
+        _log_agent(campaign_id, "strategy", "error", str(exc))
         campaigns[campaign_id]["status"] = "error"
         campaigns[campaign_id]["errors"].append(str(exc))
 
 
 async def _run_regenerate(campaign_id: str) -> None:
     """Re-runs content_node for a single campaign. Only REGENERATE posts are processed."""
+    _log_agent(campaign_id, "content", "running", "Regenerating post — building new caption and image…")
     data = campaigns[campaign_id]
     state = CampaignState(
         campaign_id=data["campaign_id"],
@@ -70,6 +94,7 @@ async def _run_regenerate(campaign_id: str) -> None:
     campaigns[campaign_id]["posts"] = result["posts"]
     campaigns[campaign_id]["errors"] = result["errors"]
     campaigns[campaign_id]["status"] = "ready"
+    _log_agent(campaign_id, "content", "done", "Post regenerated successfully")
 
 
 # ---------------------------------------------------------------------------
@@ -191,4 +216,5 @@ def schedule_campaign(campaign_id: str):
             post["status"] = PostStatus.SCHEDULED
             count += 1
 
+    _log_agent(campaign_id, "scheduler", "done", f"Scheduled {count} approved post(s)")
     return {"scheduled": count}

@@ -64,8 +64,10 @@ async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, po
     """Calls DALL-E and returns the image URL."""
     # TODO: save image to cloud storage (S3 / Cloudinary) — DALL-E URLs expire after ~1 hour
     enhanced_prompt = (
-        f"{post['image_prompt']}. "
-        "Clean, professional, no text overlay, no watermarks."
+        f"{post['image_prompt']} "
+        "Photorealistic, hyperrealistic, professional photography, 8K resolution, "
+        "shot on Canon EOS R5, natural or studio lighting, no illustration, "
+        "no CGI, no cartoon, no digital art, no text overlay, no watermarks."
     )
     response = await image_client.images.generate(
         model=image_model,
