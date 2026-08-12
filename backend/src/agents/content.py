@@ -91,14 +91,19 @@ async def _generate_image_dalle(image_client: openai.AsyncOpenAI, image_model: s
         "shot on Canon EOS R5, natural or studio lighting, no illustration, "
         "no CGI, no cartoon, no digital art, no text overlay, no watermarks."
     )
+    # gpt-image-1 / gpt-image-1-mini return base64; dall-e-2/3 return URLs
+    is_gpt_image = image_model.startswith("gpt-image")
     response = await image_client.images.generate(
         model=image_model,
         prompt=enhanced_prompt,
         size="1024x1024",
-        quality="standard",
+        **({} if is_gpt_image else {"quality": "standard"}),
         n=1,
     )
-    return response.data[0].url
+    item = response.data[0]
+    if getattr(item, "b64_json", None):
+        return f"data:image/png;base64,{item.b64_json}"
+    return item.url
 
 
 async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
