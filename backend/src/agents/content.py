@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import json
 import os
 
@@ -61,34 +60,26 @@ Hashtags must NOT include the # symbol."""
     }
 
 
-async def _generate_image_google(post: Post) -> str:
-    """Generate image using Google Imagen 3 via AI Studio (free tier).
-    Returns a base64 data URI so no external storage is needed."""
-    from google import genai
-    from google.genai import types
-
-    api_key = os.getenv("GOOGLE_API_KEY")
-    client = genai.Client(api_key=api_key)
+async def _generate_image_pollinations(post: Post) -> str:
+    """Generate image via Pollinations.ai — completely free, no API key needed.
+    Uses Flux model. Returns a stable URL (no expiry)."""
+    import urllib.parse
+    import httpx
 
     enhanced_prompt = (
         f"{post['image_prompt']} "
         "Photorealistic, professional product photography, natural lighting, "
         "clean composition, no text overlay, no watermarks."
     )
+    encoded = urllib.parse.quote(enhanced_prompt)
+    url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&model=flux&nologo=true&seed=42"
 
-    response = await asyncio.to_thread(
-        client.models.generate_images,
-        model="imagen-3.0-generate-002",
-        prompt=enhanced_prompt,
-        config=types.GenerateImagesConfig(
-            number_of_images=1,
-            aspect_ratio="1:1",
-        ),
-    )
+    # HEAD request confirms the image was generated; return the URL directly
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
 
-    image_bytes = response.generated_images[0].image.image_bytes
-    b64 = base64.b64encode(image_bytes).decode("utf-8")
-    return f"data:image/png;base64,{b64}"
+    return url
 
 
 async def _generate_image_dalle(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
@@ -111,13 +102,14 @@ async def _generate_image_dalle(image_client: openai.AsyncOpenAI, image_model: s
 
 
 async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
-    """Image generation with provider selection.
-    - If GOOGLE_API_KEY is set → use Google Imagen 3 (free, best quality).
-    - Otherwise → fall back to DALL-E via OPENAI_API_KEY.
+    """Image generation with provider selection (in priority order):
+    1. Pollinations.ai  — free, no key, Flux model (default)
+    2. DALL-E           — if IMAGE_PROVIDER=dalle and OPENAI_API_KEY is set
     """
-    if os.getenv("GOOGLE_API_KEY"):
-        return await _generate_image_google(post)
-    return await _generate_image_dalle(image_client, image_model, post)
+    provider = os.getenv("IMAGE_PROVIDER", "pollinations").lower()
+    if provider == "dalle":
+        return await _generate_image_dalle(image_client, image_model, post)
+    return await _generate_image_pollinations(post)
 
 
 async def content_node(state: CampaignState) -> CampaignState:
