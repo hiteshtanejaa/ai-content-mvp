@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import os
 
@@ -60,9 +61,39 @@ Hashtags must NOT include the # symbol."""
     }
 
 
-async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
-    """Calls DALL-E and returns the image URL."""
-    # TODO: save image to cloud storage (S3 / Cloudinary) — DALL-E URLs expire after ~1 hour
+async def _generate_image_google(post: Post) -> str:
+    """Generate image using Google Imagen 3 via AI Studio (free tier).
+    Returns a base64 data URI so no external storage is needed."""
+    from google import genai
+    from google.genai import types
+
+    api_key = os.getenv("GOOGLE_API_KEY")
+    client = genai.Client(api_key=api_key)
+
+    enhanced_prompt = (
+        f"{post['image_prompt']} "
+        "Photorealistic, professional product photography, natural lighting, "
+        "clean composition, no text overlay, no watermarks."
+    )
+
+    response = await asyncio.to_thread(
+        client.models.generate_images,
+        model="imagen-3.0-generate-002",
+        prompt=enhanced_prompt,
+        config=types.GenerateImagesConfig(
+            number_of_images=1,
+            aspect_ratio="1:1",
+        ),
+    )
+
+    image_bytes = response.generated_images[0].image.image_bytes
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    return f"data:image/png;base64,{b64}"
+
+
+async def _generate_image_dalle(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
+    """Fallback: calls DALL-E and returns the image URL.
+    Note: DALL-E URLs expire after ~1 hour."""
     enhanced_prompt = (
         f"{post['image_prompt']} "
         "Photorealistic, hyperrealistic, professional photography, 8K resolution, "
@@ -79,6 +110,16 @@ async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, po
     return response.data[0].url
 
 
+async def _generate_image(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
+    """Image generation with provider selection.
+    - If GOOGLE_API_KEY is set → use Google Imagen 3 (free, best quality).
+    - Otherwise → fall back to DALL-E via OPENAI_API_KEY.
+    """
+    if os.getenv("GOOGLE_API_KEY"):
+        return await _generate_image_google(post)
+    return await _generate_image_dalle(image_client, image_model, post)
+
+
 async def content_node(state: CampaignState) -> CampaignState:
     """
     LangGraph-style node: generates captions and images for each post.
@@ -89,11 +130,11 @@ async def content_node(state: CampaignState) -> CampaignState:
     """
     llm = get_llm(temperature=0.75)
     image_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    image_model = os.getenv("IMAGE_MODEL", "dall-e-3")
+    image_model = os.getenv("IMAGE_MODEL", "dall-e-2")
     brand_prompt = state["brand_prompt"]
 
-    # Cap concurrent DALL-E calls to avoid rate-limit errors
-    semaphore = asyncio.Semaphore(3)
+    # Cap concurrent image generation calls to avoid rate-limit errors
+    semaphore = asyncio.Semaphore(2)
 
     async def process_post(post: Post) -> Post:
         if post["status"] == PostStatus.APPROVED:
