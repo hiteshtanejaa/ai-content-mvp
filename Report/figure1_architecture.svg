@@ -1,0 +1,133 @@
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" font-family="Inter, Arial, sans-serif" style="background:#f8fafc">
+  <title>Figure 1 — System Architecture</title>
+  <desc>End-to-end architecture: User to React Frontend to FastAPI Backend to LangGraph Pipeline (Strategy Node, Content Node) to Claude API and DALL-E API; Backend also connects to SQLite Database and Meta Graph API.</desc>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/></marker>
+    <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#8b5cf6"/></marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#10b981"/></marker>
+    <marker id="arr-back" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto"><path d="M8,0 L8,6 L0,3 z" fill="#64748b"/></marker>
+  </defs>
+
+  <rect width="960" height="520" fill="#f8fafc" rx="12"/>
+  <text x="480" y="34" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">Figure 1 — System Architecture</text>
+
+  <text x="68" y="62" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">CLIENT</text>
+  <text x="232" y="62" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">FRONTEND</text>
+  <text x="430" y="62" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">BACKEND</text>
+  <text x="648" y="62" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">AGENT PIPELINE</text>
+  <text x="868" y="62" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">EXTERNAL APIs</text>
+
+  <line x1="138" y1="50" x2="138" y2="470" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="318" y1="50" x2="318" y2="470" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="538" y1="50" x2="538" y2="470" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="760" y1="50" x2="760" y2="470" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- User -->
+  <circle cx="68" cy="185" r="28" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="68" cy="175" r="9" fill="#3b82f6"/>
+  <path d="M46,205 Q46,192 68,192 Q90,192 90,205" fill="#3b82f6"/>
+  <text x="68" y="228" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">User</text>
+  <text x="68" y="242" text-anchor="middle" font-size="9" fill="#64748b">Browser</text>
+
+  <!-- React Frontend -->
+  <rect x="152" y="100" width="152" height="170" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="228" y="126" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">React Frontend</text>
+  <text x="228" y="142" text-anchor="middle" font-size="9" fill="#3b82f6">TypeScript · Vite · Tailwind</text>
+  <rect x="166" y="154" width="122" height="26" rx="5" fill="white" stroke="#93c5fd" stroke-width="1"/>
+  <text x="227" y="171" text-anchor="middle" font-size="10" fill="#1e40af">Brand Input Form</text>
+  <rect x="166" y="187" width="122" height="26" rx="5" fill="white" stroke="#93c5fd" stroke-width="1"/>
+  <text x="227" y="204" text-anchor="middle" font-size="10" fill="#1e40af">Calendar View</text>
+  <rect x="166" y="220" width="122" height="26" rx="5" fill="white" stroke="#93c5fd" stroke-width="1"/>
+  <text x="227" y="237" text-anchor="middle" font-size="10" fill="#1e40af">HITL Review Cards</text>
+
+  <!-- FastAPI Backend -->
+  <rect x="340" y="100" width="178" height="170" rx="10" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
+  <text x="429" y="126" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">FastAPI Backend</text>
+  <text x="429" y="142" text-anchor="middle" font-size="9" fill="#10b981">Python 3.11 · Pydantic v2</text>
+  <rect x="354" y="154" width="150" height="26" rx="5" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="429" y="171" text-anchor="middle" font-size="10" fill="#065f46">REST API Routes</text>
+  <rect x="354" y="187" width="150" height="26" rx="5" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="429" y="204" text-anchor="middle" font-size="10" fill="#065f46">Background Tasks</text>
+  <rect x="354" y="220" width="150" height="26" rx="5" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="429" y="237" text-anchor="middle" font-size="10" fill="#065f46">Interaction Logging</text>
+
+  <!-- LangGraph Pipeline -->
+  <rect x="556" y="88" width="192" height="196" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="652" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">LangGraph Pipeline</text>
+  <text x="652" y="128" text-anchor="middle" font-size="9" fill="#8b5cf6">CampaignState · StateGraph</text>
+  <rect x="572" y="140" width="160" height="50" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="652" y="161" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Strategy Node</text>
+  <text x="652" y="178" text-anchor="middle" font-size="9" fill="#7c3aed">Brand brief → 7-day plan</text>
+  <line x1="652" y1="190" x2="652" y2="204" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+  <rect x="572" y="206" width="160" height="50" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="652" y="227" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Content Node</text>
+  <text x="652" y="244" text-anchor="middle" font-size="9" fill="#7c3aed">Plan → captions + prompts</text>
+
+  <!-- Config label -->
+  <rect x="556" y="292" width="192" height="30" rx="6" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="652" y="306" text-anchor="middle" font-size="9" font-weight="600" fill="#6d28d9">Config A: Sequential  |  Config B: Hierarchical</text>
+  <text x="652" y="318" text-anchor="middle" font-size="8" fill="#7c3aed">Selectable at campaign creation</text>
+
+  <!-- Claude API -->
+  <rect x="776" y="100" width="162" height="68" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="857" y="126" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">Claude API</text>
+  <text x="857" y="145" text-anchor="middle" font-size="9" fill="#b45309">claude-sonnet-4-6</text>
+  <text x="857" y="160" text-anchor="middle" font-size="9" fill="#b45309">Text generation</text>
+
+  <!-- DALL-E API -->
+  <rect x="776" y="192" width="162" height="68" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+  <text x="857" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#831843">DALL-E 3 API</text>
+  <text x="857" y="237" text-anchor="middle" font-size="9" fill="#9d174d">OpenAI · 1024×1024</text>
+  <text x="857" y="252" text-anchor="middle" font-size="9" fill="#9d174d">Image generation</text>
+
+  <!-- Database cylinder -->
+  <ellipse cx="429" cy="358" rx="72" ry="14" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
+  <rect x="357" y="358" width="144" height="56" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
+  <ellipse cx="429" cy="414" rx="72" ry="14" fill="#dcfce7" stroke="#10b981" stroke-width="2"/>
+  <text x="429" y="388" text-anchor="middle" font-size="11" font-weight="700" fill="#065f46">SQLite / PostgreSQL</text>
+  <text x="429" y="404" text-anchor="middle" font-size="9" fill="#10b981">Calendar · Post · InteractionLog</text>
+
+  <!-- Meta Graph API -->
+  <rect x="776" y="320" width="162" height="68" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="857" y="346" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">Meta Graph API</text>
+  <text x="857" y="363" text-anchor="middle" font-size="9" fill="#047857">Instagram scheduling</text>
+  <text x="857" y="378" text-anchor="middle" font-size="9" fill="#047857">Sandbox / OAuth</text>
+
+  <!-- Arrows -->
+  <line x1="97" y1="180" x2="150" y2="175" stroke="#3b82f6" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <line x1="150" y1="195" x2="97" y2="190" stroke="#3b82f6" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <line x1="304" y1="176" x2="338" y2="176" stroke="#64748b" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="338" y1="192" x2="304" y2="192" stroke="#64748b" stroke-width="1.8" marker-end="url(#arr-back)"/>
+  <text x="321" y="170" text-anchor="middle" font-size="8" fill="#64748b">HTTP</text>
+  <text x="321" y="203" text-anchor="middle" font-size="8" fill="#64748b">JSON</text>
+  <line x1="518" y1="176" x2="554" y2="176" stroke="#8b5cf6" stroke-width="1.8" marker-end="url(#arr-purple)"/>
+  <line x1="554" y1="196" x2="518" y2="196" stroke="#8b5cf6" stroke-width="1.8" marker-end="url(#arr-purple)"/>
+  <text x="536" y="170" text-anchor="middle" font-size="8" fill="#8b5cf6">invoke</text>
+  <text x="536" y="207" text-anchor="middle" font-size="8" fill="#8b5cf6">state</text>
+  <path d="M732,225 L775,150" stroke="#d97706" stroke-width="1.5" fill="none" marker-end="url(#arr-green)"/>
+  <text x="765" y="188" text-anchor="middle" font-size="8" fill="#d97706" transform="rotate(-52,765,188)">captions</text>
+  <line x1="732" y1="235" x2="774" y2="232" stroke="#db2777" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <text x="753" y="228" text-anchor="middle" font-size="8" fill="#db2777">prompts</text>
+  <line x1="429" y1="270" x2="429" y2="342" stroke="#10b981" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <line x1="415" y1="342" x2="415" y2="270" stroke="#10b981" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <text x="445" y="310" font-size="8" fill="#10b981">read</text>
+  <text x="399" y="310" font-size="8" fill="#10b981">write</text>
+  <path d="M518,220 Q540,220 540,354 Q540,354 774,354" stroke="#059669" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+  <text x="625" y="344" text-anchor="middle" font-size="8" fill="#059669">schedule (planned)</text>
+
+  <!-- Legend -->
+  <rect x="20" y="450" width="920" height="52" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="36" y="466" font-size="9" font-weight="600" fill="#64748b">LEGEND</text>
+  <line x1="96" y1="462" x2="122" y2="462" stroke="#3b82f6" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <text x="128" y="466" font-size="9" fill="#475569">User interaction</text>
+  <line x1="220" y1="462" x2="246" y2="462" stroke="#64748b" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="252" y="466" font-size="9" fill="#475569">HTTP / REST</text>
+  <line x1="340" y1="462" x2="366" y2="462" stroke="#8b5cf6" stroke-width="1.8" marker-end="url(#arr-purple)"/>
+  <text x="372" y="466" font-size="9" fill="#475569">Agent invocation</text>
+  <line x1="464" y1="462" x2="490" y2="462" stroke="#10b981" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <text x="496" y="466" font-size="9" fill="#475569">DB read / write</text>
+  <line x1="580" y1="462" x2="606" y2="462" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+  <text x="612" y="466" font-size="9" fill="#475569">Scheduled publish (planned)</text>
+</svg>
