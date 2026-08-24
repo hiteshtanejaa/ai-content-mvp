@@ -8,6 +8,7 @@ export default function CampaignForm({ onSubmit, loading }) {
   const [brandPrompt, setBrandPrompt] = useState('')
   const [platforms, setPlatforms] = useState(['Instagram', 'LinkedIn'])
   const [numDays, setNumDays] = useState(7)
+  const [orchestrationMode, setOrchestrationMode] = useState('sequential')
 
   const togglePlatform = (p) =>
     setPlatforms((prev) =>
@@ -16,7 +17,7 @@ export default function CampaignForm({ onSubmit, loading }) {
 
   const handleGenerate = () => {
     if (!brandPrompt.trim() || platforms.length === 0 || loading) return
-    onSubmit({ brand_prompt: brandPrompt.trim(), platforms, num_days: numDays })
+    onSubmit({ brand_prompt: brandPrompt.trim(), platforms, num_days: numDays, orchestration_mode: orchestrationMode })
   }
 
   return (
@@ -73,6 +74,32 @@ export default function CampaignForm({ onSubmit, loading }) {
               }`}
             >
               {d} days
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Orchestration Mode */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Agent Pipeline Mode
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { value: 'sequential',    label: 'Config A — Sequential',    desc: 'Strategy → Content (baseline)' },
+            { value: 'hierarchical',  label: 'Config B — Hierarchical',  desc: 'Orchestrator → Parallel sub-agents' },
+          ].map((opt) => (
+            <div
+              key={opt.value}
+              onClick={() => setOrchestrationMode(opt.value)}
+              className={`cursor-pointer select-none text-left px-4 py-3 rounded-xl border transition ${
+                orchestrationMode === opt.value
+                  ? 'bg-violet-600 border-violet-500 text-white'
+                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
+            >
+              <div className="font-semibold text-sm">{opt.label}</div>
+              <div className="text-xs mt-0.5 opacity-75">{opt.desc}</div>
             </div>
           ))}
         </div>

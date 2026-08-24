@@ -30,3 +30,4 @@ class CampaignState(TypedDict):
     posts: list[Post]
     current_step: str
     errors: list[str]
+    orchestration_mode: NotRequired[str]   # "sequential" | "hierarchical"

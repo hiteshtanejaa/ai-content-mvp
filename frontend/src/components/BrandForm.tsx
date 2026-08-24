@@ -28,6 +28,7 @@ export default function BrandForm({ onSubmit, loading }: Props) {
     tone: 'Professional',
     platforms: ['Instagram', 'LinkedIn'],
     num_days: 7,
+    orchestration_mode: 'sequential',
   })
 
   const togglePlatform = (p: string) => {
@@ -131,6 +132,41 @@ export default function BrandForm({ onSubmit, loading }: Props) {
             {form.platforms.length === 0 && (
               <p className="text-xs text-red-400 mt-1">Select at least one platform</p>
             )}
+          </div>
+
+          {/* Orchestration Mode */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Agent Pipeline Mode
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                {
+                  value: 'sequential',
+                  label: 'Config A — Sequential',
+                  desc: 'Strategy node → Content node (baseline)',
+                },
+                {
+                  value: 'hierarchical',
+                  label: 'Config B — Hierarchical',
+                  desc: 'Orchestrator → Parallel sub-agents → Synthesiser',
+                },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, orchestration_mode: opt.value }))}
+                  className={`text-left px-4 py-3 rounded-xl border transition ${
+                    form.orchestration_mode === opt.value
+                      ? 'bg-violet-600 border-violet-500 text-white'
+                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="font-semibold text-sm">{opt.label}</div>
+                  <div className="text-xs mt-0.5 opacity-75">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Number of days */}

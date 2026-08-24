@@ -33,4 +33,5 @@ export interface BrandInput {
   tone: string
   platforms: string[]
   num_days: number
+  orchestration_mode: string   // "sequential" | "hierarchical"
 }

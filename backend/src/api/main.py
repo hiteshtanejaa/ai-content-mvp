@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.agents.content import content_node
-from src.agents.graph import campaign_graph
+from src.agents.graph import get_graph
 from src.services.state import CampaignState, PostStatus
 
 app = FastAPI(title="AI Content Calendar API", version="2.0.0")
@@ -47,6 +47,7 @@ class CampaignRequest(BaseModel):
     brand_prompt: str
     platforms: list[str]
     num_days: int = 7
+    orchestration_mode: str = "sequential"   # "sequential" | "hierarchical"
 
 
 class PostUpdate(BaseModel):
@@ -60,15 +61,30 @@ class PostUpdate(BaseModel):
 
 async def _run_graph(campaign_id: str, state: CampaignState) -> None:
     try:
-        _log_agent(campaign_id, "strategy", "running", "Analysing brand and building visual style guide…")
-        _log_agent(campaign_id, "content",  "waiting", "Waiting for strategy to complete")
-        _log_agent(campaign_id, "scheduler","waiting", "Waiting for posts to be approved")
+        mode = state.get("orchestration_mode", "sequential")
+        if mode == "hierarchical":
+            _log_agent(campaign_id, "orchestrator", "running",
+                       "Orchestrator dispatching parallel platform sub-agents…")
+            _log_agent(campaign_id, "sub-agents",   "waiting",
+                       "Platform sub-agents queued — will run in parallel")
+        else:
+            _log_agent(campaign_id, "strategy", "running",
+                       "Analysing brand and building visual style guide…")
+        _log_agent(campaign_id, "content",   "waiting", "Waiting for strategy/orchestrator to complete")
+        _log_agent(campaign_id, "scheduler", "waiting", "Waiting for posts to be approved")
 
-        result = await campaign_graph.ainvoke(state)
+        graph  = get_graph(mode)
+        result = await graph.ainvoke(state)
 
         post_count = len(result.get("posts", []))
-        _log_agent(campaign_id, "strategy", "done",    f"Generated {post_count} posts across {state['num_days']} days")
-        _log_agent(campaign_id, "content",  "done",    f"Captions and images generated for {post_count} posts")
+        if mode == "hierarchical":
+            _log_agent(campaign_id, "orchestrator", "done",
+                       f"Sub-agents produced {post_count} posts across {len(state['platforms'])} platforms")
+        else:
+            _log_agent(campaign_id, "strategy", "done",
+                       f"Generated {post_count} posts across {state['num_days']} days")
+        _log_agent(campaign_id, "content", "done",
+                   f"Captions and images generated for {post_count} posts")
 
         campaigns[campaign_id].update({**result, "status": "ready"})
     except Exception as exc:
@@ -114,6 +130,7 @@ async def create_campaign(req: CampaignRequest, background_tasks: BackgroundTask
         posts=[],
         current_step="init",
         errors=[],
+        orchestration_mode=req.orchestration_mode,
     )
     campaigns[campaign_id] = {**state, "status": "generating"}
     background_tasks.add_task(_run_graph, campaign_id, state)
