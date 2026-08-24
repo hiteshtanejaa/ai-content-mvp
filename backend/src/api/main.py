@@ -2,15 +2,25 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from src.agents.content import content_node
 from src.agents.graph import get_graph
+from src.services.database import Base, engine, get_db
+from src.services.models import InteractionLog
 from src.services.state import CampaignState, PostStatus
 
 app = FastAPI(title="AI Content Calendar API", version="2.0.0")
+
+
+@app.on_event("startup")
+def create_tables():
+    """Create all DB tables (interaction_logs etc.) on first startup."""
+    Base.metadata.create_all(bind=engine)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +35,34 @@ app.add_middleware(
 # Each entry: CampaignState fields + "status" + "agent_logs"
 # ---------------------------------------------------------------------------
 campaigns: dict[str, dict] = {}
+
+
+# ---------------------------------------------------------------------------
+# Interaction logging helper
+# ---------------------------------------------------------------------------
+
+def _log_interaction(
+    db: Session,
+    campaign_id: str,
+    post_day: int,
+    post_platform: str,
+    action: str,
+    caption_before: Optional[str] = None,
+    caption_after: Optional[str] = None,
+) -> None:
+    """Persist a HITL interaction to PostgreSQL for RQ2 analysis."""
+    mode = (campaigns.get(campaign_id) or {}).get("orchestration_mode", "sequential")
+    log = InteractionLog(
+        campaign_id=campaign_id,
+        post_day=post_day,
+        post_platform=post_platform,
+        action=action,
+        orchestration_mode=mode,
+        caption_before=caption_before,
+        caption_after=caption_after,
+    )
+    db.add(log)
+    db.commit()
 
 
 def _log_agent(campaign_id: str, agent: str, status: str, message: str) -> None:
@@ -171,21 +209,38 @@ def get_campaign(campaign_id: str):
 # ---------------------------------------------------------------------------
 
 @app.patch("/campaigns/{campaign_id}/posts/{day}")
-def update_post(campaign_id: str, day: int, update: PostUpdate):
+def update_post(campaign_id: str, day: int, update: PostUpdate, db: Session = Depends(get_db)):
     """Updates a post by day number (first match).
-    Updates status and/or caption if provided."""
+    Updates status and/or caption if provided.
+    Logs approve / reject / edit_caption interactions to the database."""
     if campaign_id not in campaigns:
         raise HTTPException(404, "Campaign not found")
 
-    # Find first post matching this day
     post = next((p for p in campaigns[campaign_id]["posts"] if p["day"] == day), None)
     if post is None:
         raise HTTPException(404, f"No post found for day {day}")
 
+    caption_before = post.get("caption")
+
     if update.status is not None:
         post["status"] = PostStatus(update.status)
+        # Log approve / reject
+        if update.status in ("approved", "rejected"):
+            _log_interaction(
+                db, campaign_id, day, post["platform"],
+                action=update.status,
+                caption_before=caption_before,
+            )
+
     if update.caption is not None:
         post["caption"] = update.caption
+        # Log caption edit
+        _log_interaction(
+            db, campaign_id, day, post["platform"],
+            action="edit_caption",
+            caption_before=caption_before,
+            caption_after=update.caption,
+        )
 
     return post
 
@@ -196,7 +251,8 @@ def update_post(campaign_id: str, day: int, update: PostUpdate):
 
 @app.post("/campaigns/{campaign_id}/posts/{day}/regenerate")
 async def regenerate_post(
-    campaign_id: str, day: int, background_tasks: BackgroundTasks
+    campaign_id: str, day: int, background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
     """Marks target post as REGENERATE, runs content_node in background.
     All other posts keep their current status — APPROVED posts are untouched."""
@@ -208,6 +264,12 @@ async def regenerate_post(
     )
     if post is None:
         raise HTTPException(404, f"No post found for day {day}")
+
+    _log_interaction(
+        db, campaign_id, day, post["platform"],
+        action="regenerate",
+        caption_before=post.get("caption"),
+    )
 
     post["status"] = PostStatus.REGENERATE
     campaigns[campaign_id]["status"] = "generating"
@@ -221,8 +283,9 @@ async def regenerate_post(
 # ---------------------------------------------------------------------------
 
 @app.post("/campaigns/{campaign_id}/schedule")
-def schedule_campaign(campaign_id: str):
+def schedule_campaign(campaign_id: str, db: Session = Depends(get_db)):
     """Sets all APPROVED posts to SCHEDULED.
+    Logs one 'schedule' interaction per post.
     TODO Phase 3: post to Meta Graph API and LinkedIn API for real scheduling."""
     if campaign_id not in campaigns:
         raise HTTPException(404, "Campaign not found")
@@ -230,8 +293,46 @@ def schedule_campaign(campaign_id: str):
     count = 0
     for post in campaigns[campaign_id]["posts"]:
         if post["status"] == PostStatus.APPROVED:
+            _log_interaction(
+                db, campaign_id, post["day"], post["platform"],
+                action="schedule",
+                caption_before=post.get("caption"),
+            )
             post["status"] = PostStatus.SCHEDULED
             count += 1
 
     _log_agent(campaign_id, "scheduler", "done", f"Scheduled {count} approved post(s)")
     return {"scheduled": count}
+
+
+# ---------------------------------------------------------------------------
+# GET /campaigns/{id}/interactions
+# ---------------------------------------------------------------------------
+
+@app.get("/campaigns/{campaign_id}/interactions")
+def get_interactions(campaign_id: str, db: Session = Depends(get_db)):
+    """Returns all logged HITL interactions for a campaign.
+    Used for RQ2 evaluation: analyse approve/reject/edit rates by orchestration mode."""
+    if campaign_id not in campaigns:
+        raise HTTPException(404, "Campaign not found")
+
+    rows = (
+        db.query(InteractionLog)
+        .filter(InteractionLog.campaign_id == campaign_id)
+        .order_by(InteractionLog.timestamp)
+        .all()
+    )
+    return [
+        {
+            "id":                 r.id,
+            "campaign_id":        r.campaign_id,
+            "post_day":           r.post_day,
+            "post_platform":      r.post_platform,
+            "action":             r.action,
+            "orchestration_mode": r.orchestration_mode,
+            "caption_before":     r.caption_before,
+            "caption_after":      r.caption_after,
+            "timestamp":          r.timestamp.isoformat() if r.timestamp else None,
+        }
+        for r in rows
+    ]
