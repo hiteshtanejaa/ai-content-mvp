@@ -25,6 +25,7 @@ import json
 from src.services.llm import get_llm
 from src.services.state import CampaignState, Post, PostStatus
 from src.agents.strategy import _build_visual_style_guide
+from src.services.utils import strip_day_artifacts
 
 _PLATFORM_GUIDELINES = {
     "Instagram": "visual-first, 2-4 sentences, 5-8 hashtags in caption, warm engaging tone",
@@ -63,6 +64,12 @@ Your strategic brief from the campaign orchestrator:
 Platform rules for {platform}: {guidelines}
 
 Generate exactly {num_days} posts — one per day — each with a distinct theme.
+
+CAPTION RULES (critical):
+- NEVER mention the day number in the caption (no "Day 1", "Day 2 of...", "Day 3 at..." etc.)
+- Each caption must read as a standalone, publishable post — not part of a numbered series
+- Vary the opening hook on every post: never reuse the same sentence structure
+- The "day" field in the JSON is metadata only — it must NOT appear anywhere in the caption text
 
 IMAGE PROMPT RULES:
 - Start every image_prompt with "Photograph of …"
@@ -111,7 +118,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
             day=int(item["day"]),
             platform=str(item.get("platform", platform)),
             content_type=str(item.get("content_type", "image")),
-            caption=str(item.get("caption", "")),
+            caption=strip_day_artifacts(str(item.get("caption", ""))),
             hashtags=[str(h).lstrip("#") for h in item.get("hashtags", [])],
             image_prompt=str(item.get("image_prompt", "")),
             image_url=None,

@@ -1,6 +1,7 @@
 import json
 from src.services.llm import get_llm
 from src.services.state import CampaignState, Post, PostStatus
+from src.services.utils import strip_day_artifacts
 
 _PLATFORM_GUIDELINES = {
     "Instagram": "visual-first, 2-4 sentences, 5-8 hashtags in caption, warm and engaging tone",
@@ -111,6 +112,10 @@ IMAGE PROMPT RULES (critical):
 CAPTION RULES:
 - Platform-native tone (see guidelines above)
 - Authentic — not copy-pasted across platforms
+- NEVER mention the day number in the caption (no "Day 1", "Day 2 of...", "Day 3 at..." etc.)
+- Each caption must read as a standalone, publishable post — not part of a numbered series
+- Vary the opening hook on every post: never reuse the same sentence structure
+- The "day" field in the JSON is ordering metadata only — it must NOT appear in the caption text
 - Hashtags as a JSON array WITHOUT the # symbol
 - content_type: one of "image", "carousel", "text"
 
@@ -161,7 +166,7 @@ Return ONLY a valid JSON array — no markdown, no explanation, no code fences:
                     day=int(item["day"]),
                     platform=str(item["platform"]),
                     content_type=str(item.get("content_type", "image")),
-                    caption=str(item.get("caption", "")),
+                    caption=strip_day_artifacts(str(item.get("caption", ""))),
                     hashtags=[str(h).lstrip("#") for h in item.get("hashtags", [])],
                     image_prompt=str(item.get("image_prompt", "")),
                     image_url=None,

@@ -83,13 +83,16 @@ async def _generate_image_pollinations(post: Post) -> str:
 
 
 async def _generate_image_dalle(image_client: openai.AsyncOpenAI, image_model: str, post: Post) -> str:
-    """Fallback: calls DALL-E and returns the image URL.
-    Note: DALL-E URLs expire after ~1 hour."""
+    """Calls gpt-image-1-mini / DALL-E and returns an image URL or base64 data URI.
+    Note: DALL-E URLs expire after ~1 hour; gpt-image-1 returns base64."""
     enhanced_prompt = (
         f"{post['image_prompt']} "
-        "Photorealistic, hyperrealistic, professional photography, 8K resolution, "
-        "shot on Canon EOS R5, natural or studio lighting, no illustration, "
-        "no CGI, no cartoon, no digital art, no text overlay, no watermarks."
+        "Ultra-photorealistic, shot on Sony A7R V with 50mm f/1.4 lens, "
+        "shallow depth of field, warm cafe ambient lighting, "
+        "film-like colour grading, authentic real-world scene, "
+        "award-winning food & lifestyle photography, "
+        "no illustration, no CGI, no cartoon, no digital art, "
+        "no text, no watermarks, no logos."
     )
     # gpt-image-1 / gpt-image-1-mini return base64; dall-e-2/3 return URLs
     is_gpt_image = image_model.startswith("gpt-image")

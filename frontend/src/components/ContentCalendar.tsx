@@ -92,7 +92,7 @@ export default function ContentCalendar({ calendar, onCalendarUpdate, onDelete, 
             <div>
               <p className="font-medium">Generating your content calendar…</p>
               <p className="text-sm text-violet-400/70 mt-0.5">
-                Claude is writing captions and DALL-E is generating images. This may take 1–2 minutes.
+                AI is writing captions and generating images. This may take 1–2 minutes.
               </p>
             </div>
           </div>
